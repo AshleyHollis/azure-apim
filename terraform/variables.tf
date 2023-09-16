@@ -1,0 +1,3 @@
+variable "apiappadtenant" {
+  type = string  
+}

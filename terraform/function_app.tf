@@ -22,7 +22,7 @@ resource "azurerm_linux_function_app" "apiapp01" {
   storage_account_name       = azurerm_storage_account.fnapps.name
   storage_account_access_key = azurerm_storage_account.fnapps.primary_access_key
 
-  service_plan_id = azurerm_service_plan.fnapps.id
+  service_plan_id = azurerm_service_plan.main.id
 
   site_config {}
 }

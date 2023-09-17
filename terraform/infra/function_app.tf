@@ -25,4 +25,8 @@ resource "azurerm_linux_function_app" "apiapp01" {
   service_plan_id = azurerm_service_plan.main.id
 
   site_config {}
+
+  app_settings = {
+    ClientSecret = azuread_application_password.apiapp01.value
+  }
 }

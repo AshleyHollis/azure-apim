@@ -11,11 +11,14 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Linq;
 using System.Security.Claims;
+using System.Net.Http;
+using System.Reflection.Metadata;
 
 namespace Company.Function
 {
@@ -39,12 +42,72 @@ namespace Company.Function
         default:
           break;
       }
-      return (ActionResult)new OkObjectResult(requestedRoute);
+
+      return new BadRequestObjectResult(new
+      {
+        status = "failure",
+        message = "Unknown requested route."
+      });
     }
 
     private static IActionResult Anonymous(HttpRequest req, ILogger log)
     {
-      return (ActionResult)new OkObjectResult("anonymous");
+      return new OkObjectResult(new
+      {
+        status = "success",
+        type = "anonymous"
+      });
+    }
+
+    private static async Task<string> GetGraphAccessToken()
+    {
+      var clientID = Constants.clientID;
+      var authority = Constants.authority;
+
+      var clientSecret = Environment.GetEnvironmentVariable("ClientSecret");
+
+      // Create the confidential client application
+      var app = ConfidentialClientApplicationBuilder.Create(clientID)
+          .WithClientSecret(clientSecret)
+          .WithAuthority(new Uri(authority))
+          .Build();
+
+      // Use the .default scope
+      var scopes = new string[] { "https://graph.microsoft.com/.default" };
+
+      // Acquire the token
+      try
+      {
+        var result = await app.AcquireTokenForClient(scopes).ExecuteAsync();
+        return result.AccessToken;
+      }
+      catch (System.Exception ex)
+      {
+        throw ex;
+      }
+    }
+
+    private static async Task<string> GetAppNameFromGraphAPI(string appid)
+    {
+      string graphToken = await GetGraphAccessToken();
+      string url = $"https://graph.microsoft.com/v1.0/applications?$filter=appId eq '{appid}'";
+
+      using (var client = new HttpClient())
+      {
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", graphToken);
+        HttpResponseMessage response = await client.GetAsync(url);
+
+        if (response.IsSuccessStatusCode)
+        {
+          string content = await response.Content.ReadAsStringAsync();
+          var applicationDetails = JsonConvert.DeserializeObject<dynamic>(content);
+          return applicationDetails.value[0].displayName;
+        }
+        else
+        {
+          return "Unknown App";
+        }
+      }
     }
 
     private static async Task<IActionResult> Authenticated(HttpRequest req, ILogger log)
@@ -62,11 +125,14 @@ namespace Company.Function
           var appidClaim = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "appid");
           if (appidClaim != null)
           {
+
+            var appName = await GetAppNameFromGraphAPI(appidClaim.Value);
             return new OkObjectResult(new
             {
               status = "success",
               type = "clientCredentialFlow",
-              appid = appidClaim.Value
+              appid = appidClaim.Value,
+              appName = appName // This is the name of the app registration
             });
           }
           else
@@ -99,7 +165,6 @@ namespace Company.Function
       };
       return unauthorizedResponse;
     }
-
 
     private static string GetAccessToken(HttpRequest req)
     {

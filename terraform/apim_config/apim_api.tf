@@ -3,6 +3,7 @@ resource "azurerm_api_management_api" "auth-tester" {
   resource_group_name   = local.resource_group_name
   api_management_name   = local.api_management_name
   revision              = "1"
+  display_name          = "auth-tester"
   path                  = "auth-tester"
   protocols             = ["https"]
   subscription_required = false

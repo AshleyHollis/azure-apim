@@ -19,6 +19,15 @@ resource "azurerm_api_management_api_operation" "auth-tester-anonymous" {
   url_template        = "/anonymous"
 }
 
+resource "azurerm_api_management_api_operation_policy" "auth-tester-anonymous" {
+  api_name            = azurerm_api_management_api.auth-tester.name
+  api_management_name = local.api_management_name
+  resource_group_name = local.resource_group_name
+  operation_id        = azurerm_api_management_api_operation.auth-tester-anonymous.operation_id
+
+  xml_content = file("${path.module}/apim_policies/unauthenticated.xml")
+}
+
 resource "azurerm_api_management_api_operation" "auth-tester-authenticated" {
   operation_id        = "auth-tester-authenticated"
   api_name            = azurerm_api_management_api.auth-tester.name
@@ -29,6 +38,15 @@ resource "azurerm_api_management_api_operation" "auth-tester-authenticated" {
   url_template        = "/authenticated"
 }
 
+resource "azurerm_api_management_api_operation_policy" "auth-tester-authenticated" {
+  api_name            = azurerm_api_management_api.auth-tester.name
+  api_management_name = local.api_management_name
+  resource_group_name = local.resource_group_name
+  operation_id        = azurerm_api_management_api_operation.auth-tester-authenticated.operation_id
+
+  xml_content = file("${path.module}/apim_policies/authenticated.xml")
+}
+
 resource "azurerm_api_management_api_operation" "auth-tester-not-found" {
   operation_id        = "auth-tester-not-found"
   api_name            = azurerm_api_management_api.auth-tester.name
@@ -37,4 +55,13 @@ resource "azurerm_api_management_api_operation" "auth-tester-not-found" {
   display_name        = "not-found"
   method              = "GET"
   url_template        = "/not-found"
+}
+
+resource "azurerm_api_management_api_operation_policy" "auth-tester-not-found" {
+  api_name            = azurerm_api_management_api.auth-tester.name
+  api_management_name = local.api_management_name
+  resource_group_name = local.resource_group_name
+  operation_id        = azurerm_api_management_api_operation.auth-tester-not-found.operation_id
+
+  xml_content = file("${path.module}/apim_policies/unauthenticated.xml")
 }

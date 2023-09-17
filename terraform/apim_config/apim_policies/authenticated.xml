@@ -1,0 +1,32 @@
+<policies>
+  <inbound>
+      <base />
+      <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized. Access token is missing or invalid.">
+          <openid-config url="https://login.microsoftonline.com/ashleyhollisoutlook.onmicrosoft.com/v2.0/.well-known/openid-configuration" />
+          <audiences>
+              <audience>api://apiapp01</audience>
+          </audiences>
+          <issuers>
+              <issuer>https://sts.windows.net/c2d723a2-474e-44d2-a37c-9b4e9cb823d4/</issuer>
+          </issuers>
+          <required-claims>
+              <claim name="aud">
+                  <value>api://apiapp01</value>
+              </claim>
+              <claim name="roles" match="any">
+                  <value>App.Request.Get</value>
+              </claim>
+          </required-claims>
+      </validate-jwt>
+      <set-backend-service id="apim-generated-policy" backend-id="auth-tester" />
+  </inbound>
+  <backend>
+      <base />
+  </backend>
+  <outbound>
+      <base />
+  </outbound>
+  <on-error>
+      <base />
+  </on-error>
+</policies>
